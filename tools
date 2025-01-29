@@ -31,3 +31,24 @@ One of the examples of fuzzy hashing is the usage of SSDeep; on the SSDeep offic
 
 Example of SSDeep from VirusTotal:
 https://ssdeep-project.github.io/ssdeep/index.html
+
+# MITRE 
+https://attack.mitre.org/
+
+TTPs (Tough)
+It is not over yet. But good news, we made it to the final stage or the apex of the Pyramid of Pain! 
+
+TTPs stands for Tactics, Techniques & Procedures. This includes the whole MITRE ATT&CK Matrix, 
+which means all the steps taken by an adversary to achieve his goal, starting from phishing attempts to persistence and data exfiltration. 
+
+If you can detect and respond to the TTPs quickly, you leave the adversaries almost no chance to fight back. 
+For, example if you could detect a Pass-the-Hash attack using Windows Event Log Monitoring and remediate it, you would be able to find the
+compromised host very quickly and stop the lateral movement inside your network. 
+
+At this point, the attacker would have two options:
+Go back, do more research and training, reconfigure their custom tools
+Give up and find another target
+Option 2 definitely sounds less time and resource-consuming.
+
+
+https://www.beyondtrust.com/resources/glossary/pass-the-hash-pth-attack
