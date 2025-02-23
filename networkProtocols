@@ -239,3 +239,238 @@ We had to send a couple of lines: GET / HTTP/1.1 and Host: anything to get the p
 You can use this method to access any page and not just the default page /. 
 To get file.html, you would send GET /file.html HTTP/1.1, for instance (GET /file.html might work depending on the web server in use). 
 This approach is efficient for troubleshooting as you would be “talking HTTP” with the server.
+
+# FTP 
+
+Unlike HTTP, which is designed to retrieve web pages, File Transfer Protocol (FTP) is designed to transfer files. As a result, FTP is very efficient for file transfer, and when all conditions are equal, it can achieve higher speeds than HTTP.
+
+Example commands defined by the FTP protocol are:
+
+USER is used to input the username
+PASS is used to enter the password
+RETR (retrieve) is used to download a file from the FTP server to the client.
+STOR (store) is used to upload a file from the client to the FTP server.
+FTP server listens on TCP port 21 by default; data transfer is conducted via another connection from the client to the server.
+
+In the terminal below we executed the command ftp 10.10.37.151 to connect to the remote FTP server using the local ftp client. Then we went through the following steps:
+
+We used the username anonymous to log in
+We didn’t need to provide any password
+Issuing ls returned a list of files available for download
+type ascii switched to ASCII mode as this is a text file
+get coffee.txt allowed us to retrieve the file we want
+The command exchange via the FTP client is shown in the terminal below.
+
+Terminal
+user@TryHackMe$ ftp 10.10.37.151
+Connected to 10.10.37.151 (10.10.37.151).
+220 (vsFTPd 3.0.5)
+Name (10.10.37.151:strategos): anonymous
+331 Please specify the password.
+Password:
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp> ls
+227 Entering Passive Mode (10,10,41,192,134,10).
+150 Here comes the directory listing.
+-rw-r--r--    1 0        0            1480 Jun 27 08:03 coffee.txt
+-rw-r--r--    1 0        0              14 Jun 27 08:04 flag.txt
+-rw-r--r--    1 0        0            1595 Jun 27 08:05 tea.txt
+226 Directory send OK.
+ftp> type ascii
+200 Switching to ASCII mode.
+ftp> get coffee.txt
+local: coffee.txt remote: coffee.txt
+227 Entering Passive Mode (10,10,41,192,57,100).
+150 Opening BINARY mode data connection for coffee.txt (1480 bytes).
+WARNING! 47 bare linefeeds received in ASCII mode
+File may not have transferred correctly.
+226 Transfer complete.
+1480 bytes received in 8e-05 secs (18500.00 Kbytes/sec)
+ftp> quit
+221 Goodbye.
+
+
+We used Wireshark to examine the exchanged messages more closely.
+The client’s messages are in red, while the server’s responses are in blue. 
+Notice how various commands differ between the client and the server. 
+For example, when you type ls on the client, the client sends LIST to the server.
+One last thing to note is that the directory listing and the file we downloaded are sent over a separate connection each.
+
+As with browsing the web and downloading files, sending email needs its own protocol. 
+Simple Mail Transfer Protocol (SMTP) defines how a mail client talks with a mail server and how a mail server talks with another.
+
+The analogy for the SMTP protocol is when you go to the local post office to send a package. 
+You greet the employee, tell them where you want to send your package, and provide the sender’s information before handing them the package. Depending on the country you are in, you might be asked to show your identity card. This process is not very different from an SMTP session.
+
+Let’s present some of the commands used by your mail client when it transfers an email to an SMTP server:
+
+HELO or EHLO initiates an SMTP session
+MAIL FROM specifies the sender’s email address
+RCPT TO specifies the recipient’s email address
+DATA indicates that the client will begin sending the content of the email message
+. is sent on a line by itself to indicate the end of the email message
+The terminal below shows an example of an email sent via telnet. The SMTP server listens on TCP port 25 by default.
+
+Terminal
+user@TryHackMe$ telnet 10.10.37.151 25
+Trying 10.10.37.151...
+Connected to 10.10.37.151.
+Escape character is '^]'.
+220 example.thm ESMTP Exim 4.95 Ubuntu Thu, 27 Jun 2024 16:18:09 +0000
+HELO client.thm
+250 example.thm Hello client.thm [10.11.81.126]
+MAIL FROM: <user@client.thm>
+250 OK
+RCPT TO: <strategos@server.thm>
+250 Accepted
+DATA
+354 Enter message, ending with "." on a line by itself
+From: user@client.thm
+To: strategos@server.thm
+Subject: Telnet email
+
+Hello. I am using telnet to send you an email!
+.
+250 OK id=1sMrpq-0001Ah-UT
+QUIT
+221 example.thm closing connection
+Connection closed by foreign host.
+Obviously, sending an email using telnet is quite cumbersome; however, it helps you better understand the commands that your email client issues under the hood. 
+The Wireshark capture shows the exchange in colours; the client’s messages are in red, while the server’s responses are in blue.
+
+The data exchanged between the client and the SMTP server as captured by Wireshark.
+
+
+
+# POP3
+
+Now that we have covered some basic HTTP, FTP, and SMTP commands, you should have gained a solid understanding of how protocols are designed and used.
+It should be effortless to learn how other text-based protocols, such as POP3 and IMAP, work.
+
+You’ve received an email and want to download it to your local mail client. The Post Office Protocol version 3 (POP3) is designed to allow the client to communicate with a mail server and retrieve email messages.
+
+Without going into in-depth technical details, an email client sends its messages by relying on SMTP and retrieves them using POP3. SMTP is similar to handing your envelope or package to the post office, and POP3 is similar to checking your local mailbox for new letters or packages.
+
+POP3 is like a personal mailbox. SMTP is like the Post Office designated box.
+
+Some common POP3 commands are:
+
+USER <username> identifies the user
+PASS <password> provides the user’s password
+STAT requests the number of messages and total size
+LIST lists all messages and their sizes
+RETR <message_number> retrieves the specified message
+DELE <message_number> marks a message for deletion
+QUIT ends the POP3 session applying changes, such as deletions
+In the terminal below, we can see a POP3 session over telnet. Since the POP3 server listens on TCP port 110 by default, the command to connect to the TELNET port is telnet 10.10.37.151 110. The exchange below retrieves the email message sent in the previous task.
+
+Terminal
+user@TryHackMe$ telnet 10.10.37.151 110
+Trying 10.10.37.151...
+Connected to 10.10.37.151.
+Escape character is '^]'.
++OK [XCLIENT] Dovecot (Ubuntu) ready.
+AUTH
++OK
+PLAIN
+.
+USER strategos
++OK
+PASS 
++OK Logged in.
+STAT
++OK 3 1264
+LIST
++OK 3 messages:
+1 407
+2 412
+3 445
+.
+RETR 3
++OK 445 octets
+Return-path: <user@client.thm>
+Envelope-to: strategos@server.thm
+Delivery-date: Thu, 27 Jun 2024 16:19:35 +0000
+Received: from [10.11.81.126] (helo=client.thm)
+        by example.thm with smtp (Exim 4.95)
+        (envelope-from <user@client.thm>)
+        id 1sMrpq-0001Ah-UT
+        for strategos@server.thm;
+        Thu, 27 Jun 2024 16:19:35 +0000
+From: user@client.thm
+To: strategos@server.thm
+Subject: Telnet email
+
+Hello. I am using telnet to send you an email!
+.
+QUIT
++OK Logging out.
+Connection closed by foreign host.
+Someone capturing the network packets would be able to intercept the exchanged traffic. 
+As per previous Wireshark captures, the commands in red are sent by the client, and the lines in blue are the server’s.
+It is also clear that someone capturing the traffic can read the passwords.
+
+The data exchanged between the client and the POP3 server as captured by Wireshark.
+
+Connecting to a POP3 server requires authentication. Use the following login credentials when needed:
+
+Username: linda
+Password: Pa$$123
+
+# e server and synchronized across the email clients.
+
+The IMAP protocol commands are more complicated than the POP3 protocol commands. We list a few examples below:
+
+LOGIN <username> <password> authenticates the user
+SELECT <mailbox> selects the mailbox folder to work with
+FETCH <mail_number> <data_item_name> Example fetch 3 body[] to fetch message number 3, header and body.
+MOVE <sequence_set> <mailbox> moves the specified messages to another mailbox
+COPY <sequence_set> <data_item_name> copies the specified messages to another mailbox
+LOGOUT logs out
+Knowing that the IMAP server listens on TCP port 143 by default, we will use telnet to connect to 10.10.37.151’s port 143 and fetch the message we sent in an earlier task.
+
+Terminal
+user@TryHackMe$ telnet 10.10.41.192 143
+Trying 10.10.41.192...
+Connected to 10.10.41.192.
+Escape character is '^]'.
+* OK [CAPABILITY IMAP4rev1 SASL-IR LOGIN-REFERRALS ID ENABLE IDLE LITERAL+ STARTTLS AUTH=PLAIN] Dovecot (Ubuntu) ready.
+A LOGIN strategos
+A OK [CAPABILITY IMAP4rev1 SASL-IR LOGIN-REFERRALS ID ENABLE IDLE SORT SORT=DISPLAY THREAD=REFERENCES THREAD=REFS THREAD=ORDEREDSUBJECT MULTIAPPEND URL-PARTIAL CATENATE UNSELECT CHILDREN NAMESPACE UIDPLUS LIST-EXTENDED I18NLEVEL=1 CONDSTORE QRESYNC ESEARCH ESORT SEARCHRES WITHIN CONTEXT=SEARCH LIST-STATUS BINARY MOVE SNIPPET=FUZZY PREVIEW=FUZZY PREVIEW STATUS=SIZE SAVEDATE LITERAL+ NOTIFY SPECIAL-USE] Logged in
+B SELECT inbox
+* FLAGS (\Answered \Flagged \Deleted \Seen \Draft)
+* OK [PERMANENTFLAGS (\Answered \Flagged \Deleted \Seen \Draft \*)] Flags permitted.
+* 4 EXISTS
+* 0 RECENT
+* OK [UNSEEN 2] First unseen.
+* OK [UIDVALIDITY 1719824692] UIDs valid
+* OK [UIDNEXT 5] Predicted next UID
+B OK [READ-WRITE] Select completed (0.001 + 0.000 secs).
+C FETCH 3 body[]
+* 3 FETCH (BODY[] {445}
+Return-path: <user@client.thm>
+Envelope-to: strategos@server.thm
+Delivery-date: Thu, 27 Jun 2024 16:19:35 +0000
+Received: from [10.11.81.126] (helo=client.thm)
+        by example.thm with smtp (Exim 4.95)
+        (envelope-from <user@client.thm>)
+        id 1sMrpq-0001Ah-UT
+        for strategos@server.thm;
+        Thu, 27 Jun 2024 16:19:35 +0000
+From: user@client.thm
+To: strategos@server.thm
+Subject: Telnet email
+
+Hello. I am using telnet to send you an email!
+)
+C OK Fetch completed (0.001 + 0.000 secs).
+D LOGOUT
+* BYE Logging out
+D OK Logout completed (0.001 + 0.000 secs).
+Connection closed by foreign host.
+The screenshot below shows the exchanged messages between the client and the server as seen from Wireshark. The client only needed to send four commands, shown in red, and the “long” server responses are shown in blue.
+
+The data exchanged between the client and the IMAP server as captured by Wireshark.
+
