@@ -1,3 +1,88 @@
+Consider the following scenario from everyday life. Let’s say you are meeting a business partner over coffee and discussing somewhat confidential business plans. Let’s break down the meeting from the security perspective.
+
+You can see and hear the other person. Consequently, it is easy to be sure of their identity. That’s authentication, i.e., you are confirming the identity of who you are talking with.
+You can also confirm that what you are “hearing” is coming from your business partner. You can tell what words and sentences are coming from your business partner and what is coming from others. That’s authenticity, i.e., you verify that the message genuinely comes from a specific sender. Moreover, you know that what they are saying is reaching you, and there is no chance of anything changing the other party’s words across the table. That’s integrity, i.e., ensuring that the data has not been altered or tampered with.
+Finally, you can pick a seat away from the other customers and keep your voice low so that only your business partner can hear you. That’s confidentiality, i.e., only the authorised parties can access the data.
+Let’s quickly compare this with correspondence in the cyber realm. When someone sends you a text message, how can you be sure they are who they claim to be? How can you be sure that nothing changed the text as it travelled across various network links? When you are communicating with your business partner over an online messaging platform, you need to be sure of the following:
+
+Authentication: You want to be sure you communicate with the right person, not someone else pretending.
+Authenticity: You can verify that the information comes from the claimed source.
+Integrity: You must ensure that no one changes the data you exchange.
+Confidentiality: You want to prevent an unauthorised party from eavesdropping on your conversations.
+Cryptography can provide solutions to satisfy the above requirements, among many others. Private key cryptography, i.e., symmetric encryption, mainly protects confidentiality. However, public key cryptography, i.e., asymmetric cryptography, plays a significant role in authentication, authenticity, and integrity. This room will show various examples of how public key cryptography achieves that.
+
+Learning Prerequisites
+This room is the second of three introductory rooms about cryptography. Before starting this room, ensure you have finished the first one on the list.
+
+Cryptography Basics
+Public Key Cryptography Basics (this room)
+Hashing Basics
+Learning Objectives
+In this room, we will cover various asymmetric cryptosystems and applications that use them, such as:
+
+RSA
+Diffie-Hellman
+SSH
+SSL/TLS Certificates
+PGP and GPG
+
+Analogy
+Imagine you have a secret code for communicating and instructions for using the secret code. The question is how you can send these instructions to your friend without anyone else being able to read them. The answer is more straightforward than it seems; you could ask your friend for a lock. Only your friend has the key for this lock, and we’ll assume you have an indestructible box you can lock with it.
+
+If you send the instructions in a locked box to your friend, they can unlock it once it reaches them and read the instructions. After that, you can communicate using the secret code without the risk of people snooping.
+
+In this metaphor, the secret code represents a symmetric encryption cipher and key, the lock represents the server’s public key, and the key represents the server’s private key.
+
+Analogy	Cryptographic System
+Secret Code	Symmetric Encryption Cipher and Key
+Lock	Public Key
+Lock’s Key	Private Key
+Consequently, you would only need to use asymmetric cryptography once so that it won’t affect the speed, and then you can communicate privately using symmetric encryption.
+
+The Real World
+In reality, you need more cryptography to verify that the person you’re talking to is who they say they are. This is achieved using digital signatures and certificates, which we will visit later in this room.
+        The Math That Makes RSA Secure
+RSA is based on the mathematically difficult problem of factoring a large number. Multiplying two large prime numbers is a straightforward operation; however, finding the factors of a huge number takes much more computing power.
+
+It’s simple to multiply two prime numbers together even on paper, say 113 × 127 = 14351. Even for larger prime numbers, it would still be a feasible job, even by hand. Consider the following numeric example:
+
+Prime number 1: 982451653031
+Prime number 2: 169743212279
+Their product: 982451653031 × 169743212279 = 166764499494295486767649
+On the other hand, it’s pretty tricky to determine what two prime numbers multiply together to make 14351 and even more challenging to find the factors of 166764499494295486767649.
+
+In real-world examples, the prime numbers would be much bigger than the ones in this example. A computer can easily factorise 166764499494295486767649; however, it cannot factorise a number with more than 600 digits. And you would agree that the multiplication of the two huge prime numbers, each around 300 digits, would be easier than the factorisation of their product.
+
+Numerical Example
+Let’s revisit encryption, decryption, and key usage in asymmetric encryption. The public key is known to all correspondents and is used for encryption, while the private key is protected and used for decryption, as shown in the figure below.
+
+Alice encrypts the message with Bob's public key and Bob decrypts it with his private key.
+
+In the Cryptography Basics room, we explained the modulo operation and said it plays a significant role in cryptography. In the following simplified numerical example, we see the RSA algorithm in action:
+
+Bob chooses two prime numbers: p = 157 and q = 199. He calculates n = p × q = 31243.
+With ϕ(n) = n − p − q + 1 = 31243 − 157 − 199 + 1 = 30888, Bob selects e = 163 such that e is relatively prime to ϕ(n); moreover, he selects d = 379, where e × d = 1 mod ϕ(n), i.e., e × d = 163 × 379 = 61777 and 61777 mod 30888 = 1. The public key is (n,e), i.e., (31243,163) and the private key is $(n,d), i.e., (31243,379).
+Let’s say that the value they want to encrypt is x = 13, then Alice would calculate and send y = xe mod n = 13163 mod 31243 = 16341.
+Bob will decrypt the received value by calculating x = yd mod n = 16341379 mod 31243 = 13. This way, Bob recovers the value that Alice sent.
+The proof that the above algorithm works can be found in modular arithmetic and is beyond the scope of this module. It is worth repeating that in this example, we picked a three-digit prime number, while in an actual application, p and q would be at least a 300-digit prime number each.
+
+RSA in CTFs
+The math behind RSA comes up relatively often in CTFs, requiring you to calculate variables or break some encryption based on them. Many good articles online explain RSA, and they will give you almost all of the information you need to complete the challenges. One good example of an RSA CTF challenge is the Breaking RSA room.
+
+There are some excellent tools for defeating RSA challenges in CTFs. My favourite is RsaCtfTool, which has worked well for me. I’ve also had some success with rsatool.
+
+You need to know the main variables for RSA in CTFs: p, q, m, n, e, d, and c. As per our numerical example:
+
+p and q are large prime numbers
+n is the product of p and q
+The public key is n and e
+The private key is n and d
+m is used to represent the original message, i.e., plaintext
+c represents the encrypted text, i.e., ciphertext
+Crypto CTF challenges often present you with a set of these values, and you need to break the encryption and decrypt a message to retrieve the flag.
+
+Answer the questions below
+
 Exchanging keys for symmetric encryption is a widespread use of asymmetric cryptography. Asymmetric encryption is relatively slow compared to symmetric encryption; therefore, we rely on asymmetric encryption to negotiate and agree on symmetric encryption ciphers and keys.
 
 But the question is, how do you agree on a key with the server without transmitting the key for people snooping to see?
@@ -86,5 +171,82 @@ The chosen numbers are too small to provide any security, and in real-life appli
 
 Diffie-Hellman Key Exchange is often used alongside RSA public key cryptography. Diffie-Hellman is used for key agreement, while RSA is used for digital signatures, key transport, and authentication, among many others. For instance, RSA helps prove the identity of the person you’re talking to via digital signing, as you can confirm based on their public key. This would prevent someone from attacking the connection with a man-in-the-middle attack against Alice by pretending to be Bob. 
 In brief, Diffie-Hellman and RSA are incorporated into many security protocols and standards to provide a comprehensive security solution.
+
+In the “analogue” world, you are asked to sign a paper now and then. When you visit the bank to open a savings account, you are most likely asked to sign several documents. When you want to create an account at the local library, you will be asked to fill out and sign the application. The purpose can vary depending on the situation. For example, it can confirm that you agree to the terms and conditions, authorise a transaction, or acknowledge receiving an item. In the “digital” world, you cannot use your signature, stamp or fingerprint; you need a digital signature.
+
+What’s a Digital Signature?
+Digital signatures provide a way to verify the authenticity and integrity of a digital message or document. Proving the authenticity of files means we know who created or modified them. Using asymmetric cryptography, you produce a signature with your private key, which can be verified using your public key. Only you should have access to your private key, which proves you signed the file. In many modern countries, digital and physical signatures have the same legal value.
+
+The simplest form of digital signature is encrypting the document with your private key. If someone wants to verify this signature, they would decrypt it with your public key and check if the files match. This process is shown in the image below.
+
+An example of signing a message: Bob encrypts a message with his private key and Alice decrypts it with Bob's public key.
+
+Some articles use terms such as electronic signature and digital signature interchangeably. They refer to pasting an image of a signature on top of a document. This approach does not prove the document’s integrity, as anyone can copy and paste an image.
+
+In this task, we use the term digital signature to refer to signing a document using a private key or a certificate. This process is similar to the image shown above, where Bob encrypts a hash of his document and shares it with Alice, along with the original document. Alice can decrypt the encrypted hash and compare it with the hash of the file she received. This approach proves the document’s integrity, unlike pasting a fancy image of a signature. We will cover hashing in the Hashing Basics room.
+
+Certificates: Prove Who You Are!
+Certificates are an essential application of public key cryptography, and they are also linked to digital signatures. A common place where they’re used is for HTTPS. How does your web browser know that the server you’re talking to is the real tryhackme.com?
+
+The answer lies in certificates. The web server has a certificate that says it is the real tryhackme.com. The certificates have a chain of trust, starting with a root CA (Certificate Authority). From install time, your device, operating system, and web browser automatically trust various root CAs. Certificates are trusted only when the Root CAs say they trust the organisation that signed them. In a way, it is a chain; for example, the certificate is signed by an organisation, the organisation is trusted by a CA, and the CA is trusted by your browser. Therefore, your browser trusts the certificate. In general, there are long chains of trust. You can take a look at the certificate authorities trusted by Mozilla Firefox here and by Google Chrome here.
+
+Let’s say you have a website and want to use HTTPS. This step requires having a TLS certificate. You can get one from the various certificate authorities for an annual fee. Furthermore, you can get your own TLS certificates for domains you own using Let's Encrypt for free. If you run a website, it’s worth setting up and switching to HTTPS, as any modern website would do.
+
+PGP stands for Pretty Good Privacy. It’s software that implements encryption for encrypting files, performing digital signing, and more. GnuPG or GPG is an open-source implementation of the OpenPGP standard.
+
+GPG is commonly used in email to protect the confidentiality of the email messages. Furthermore, it can be used to sign an email message and confirm its integrity.
+
+Below is an example of generating GPG. You are asked about the purpose of using gpg, whether signing only or signing and encrypting. Besides selecting the cryptographic algorithm, we needed to choose an expiry date for the generated key. Finally, we provided some information about us: our name, email address, and a comment usually about the purpose of this key.
+
+Terminal
+gpg --full-gen-key
+gpg (GnuPG) 2.4.4; Copyright (C) 2024 g10 Code GmbH
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Please select what kind of key you want:
+   (1) RSA and RSA
+   (2) DSA and Elgamal
+   (3) DSA (sign only)
+   (4) RSA (sign only)
+   (9) ECC (sign and encrypt) *default*
+  (10) ECC (sign only)
+  (14) Existing key from card
+Your selection? 9
+Please select which elliptic curve you want:
+   (1) Curve 25519 *default*
+   (4) NIST P-384
+   (6) Brainpool P-256
+Your selection? 1
+Please specify how long the key should be valid.
+         0 = key does not expire
+      <n>  = key expires in n days
+      <n>w = key expires in n weeks
+      <n>m = key expires in n months
+      <n>y = key expires in n years
+Key is valid for? (0) 
+Key does not expire at all
+Is this correct? (y/N) y
+
+GnuPG needs to construct a user ID to identify your key.
+
+Real name: strategos
+Email address: strategos@tryhackme.thm
+[...]
+pub   ed25519 2024-08-29 [SC]
+      AB7E6AA87B6A8E0D159CA7FFE5E63DBD5F83D5ED
+uid                      Strategos <strategos@tryhackme.thm>
+sub   cv25519 2024-08-29 [E]
+You may need to use GPG to decrypt files in CTFs. With PGP/GPG, private keys can be protected with passphrases in a similar way that we protect SSH private keys. If the key is passphrase protected, you can attempt to crack it using John the Ripper and gpg2john. The key provided in this task is not protected with a passphrase. The man page for GPG can be found online here.
+
+Practi﻿cal Example
+
+Now that you have your GPG key pair, you can share the public key with your contacts. Whenever your contacts want to communicate securely, they encrypt their messages to you using your public key. To decrypt the message, you will have to use your private key. Due to the importance of the GPG keys, it is vital that you keep a backup copy in a secure location.
+
+Let’s say you got a new computer. All you need to do is import your key, and you can start decrypting your received messages again:
+
+You would use gpg --import backup.key to import your key from backup.key
+To decrypt your messages, you need to issue gpg --decrypt confidential_message.gpg
+Answer the questions below
 
                                         
