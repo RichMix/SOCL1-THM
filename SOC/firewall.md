@@ -131,11 +131,4 @@ To allow/disallow any application in any of your network profiles, click on the 
 Custom Rules
 Windows Defender Firewall also allows you to create custom rules for your network to allow/disallow specific traffic as needed. Let’s create a custom rule to block all outgoing traffic on HTTP (port 80) or HTTPS (port 443). After creating this rule, we will be unable to browse any website on the Internet as the websites are working on port 80 or 443, which we will be blocking.
 
-Before creating this rule, let's test if we are able to visit a website. For testing, let's visit http://10.10.10.10/. As shown in the screenshot below, we are able to visit this website.
-
-
-
-To create a custom rule, choose "Advanced Settings" from the available options in the main dashboard. This will open a new tab where you can create your own rules.
-
-
 
