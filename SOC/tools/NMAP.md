@@ -389,3 +389,104 @@ However, it is vital to remember that just because a firewall is not blocking a 
 For example, there is a possibility that the firewall rules need to be updated to reflect recent service changes. 
 Hence, ACK and window scans are exposing the firewall rules, not the services.
 
+# Fragmented Packets
+
+## Firewall
+A firewall is a piece of software or hardware that permits packets to pass through or blocks them. 
+It functions based on firewall rules, summarized as blocking all traffic with exceptions or allowing all traffic with exceptions. 
+For instance, you might block all traffic to your server except those coming to your web server. 
+A traditional firewall inspects, at least, the IP header and the transport layer header. 
+A more sophisticated firewall would also try to examine the data carried by the transport layer.
+
+## IDS
+An intrusion detection system (IDS) inspects network packets for select behavioural patterns or specific content signatures. 
+It raises an alert whenever a malicious rule is met. 
+In addition to the IP header and transport layer header, an IDS would inspect the data contents in the transport layer and check if it matches any malicious patterns. 
+How can you make it less likely for a traditional firewall/IDS to detect your Nmap activity? 
+It is not easy to answer this; however, depending on the type of firewall/IDS, you might benefit from dividing the packet into smaller packets.
+
+## Fragmented Packets
+Nmap provides the option -f to fragment packets. Once chosen, the IP data will be divided into 8 bytes or less. Adding another -f (-f -f or -ff) will split the data into 16 byte-fragments instead of 8. You can change the default value by using the --mtu; however, you should always choose a multiple of 8.
+
+To properly understand fragmentation, we need to look at the IP header in the figure below. It might look complicated at first, but we notice that we know most of its fields. In particular, notice the source address taking 32 bits (4 bytes) on the fourth row, while the destination address is taking another 4 bytes on the fifth row. The data that we will fragment across multiple packets is highlighted in red. To aid in the reassembly on the recipient side, IP uses the identification (ID) and fragment offset, shown on the second row of the figure below.
+
+Let’s compare running sudo nmap -sS -p80 10.20.30.144 and sudo nmap -sS -p80 -f 10.20.30.144. 
+As you know by now, this will use stealth TCP SYN scan on port 80; however, in the second command, we are requesting Nmap to fragment the IP packets.
+
+In the first two lines, we can see an ARP query and response. Nmap issued an ARP query because the target is on the same Ethernet. 
+The second two lines show a TCP SYN ping and a reply. The fifth line is the beginning of the port scan; Nmap sends a TCP SYN packet to port 80. 
+In this case, the IP header is 20 bytes, and the TCP header is 24 bytes. Note that the minimum size of the TCP header is 20 bytes.
+
+With fragmentation requested via -f, the 24 bytes of the TCP header will be divided into multiples of 8 bytes, with the last fragment containing 8 bytes or less of the TCP header. Since 24 is divisible by 8, we got 3 IP fragments; each has 20 bytes of IP header and 8 bytes of TCP header. We can see the three fragments between the fifth and the seventh lines.
+
+Note that if you added -ff (or -f -f), the fragmentation of the data will be multiples of 16. 
+In other words, the 24 bytes of the TCP header, in this case, would be divided over two IP fragments, the first containing 16 bytes and the second containing 8 bytes of the TCP header.
+
+On the other hand, if you prefer to increase the size of your packets to make them look innocuous, you can use the option --data-length NUM, where num specifies the number of bytes you want to append to your packets.
+
+# Idle/Zombie Scan
+Spoofing the source IP address can be a great approach to scanning stealthily. However, spoofing will only work in specific network setups. 
+It requires you to be in a position where you can monitor the traffic. 
+Considering these limitations, spoofing your IP address can have little use; however, we can give it an upgrade with the idle scan.
+
+The idle scan, or zombie scan, requires an idle system connected to the network that you can communicate with. 
+Practically, Nmap will make each probe appear as if coming from the idle (zombie) host, then it will check for indicators whether the idle (zombie) host received any response to the spoofed probe. This is accomplished by checking the IP identification (IP ID) value in the IP header. 
+You can run an idle scan using nmap -sI ZOMBIE_IP 10.10.189.203, where ZOMBIE_IP is the IP address of the idle host (zombie).
+
+The idle (zombie) scan requires the following three steps to discover whether a port is open:
+
+Trigger the idle host to respond so that you can record the current IP ID on the idle host.
+Send a SYN packet to a TCP port on the target. The packet should be spoofed to appear as if it was coming from the idle host (zombie) IP address.
+Trigger the idle machine again to respond so that you can compare the new IP ID with the one received earlier.
+Let’s explain with figures. In the figure below, we have the attacker system probing an idle machine, a multi-function printer. 
+By sending a SYN/ACK, it responds with an RST packet containing its newly incremented IP ID.
+
+The attacker will send a SYN packet to the TCP port they want to check on the target machine in the next step. However, this packet will use the idle host (zombie) IP address as the source. Three scenarios would arise. In the first scenario, shown in the figure below, the TCP port is closed; therefore, the target machine responds to the idle host with an RST packet. The idle host does not respond; hence its IP ID is not incremented.
+
+In the second scenario, as shown below, the TCP port is open, so the target machine responds with a SYN/ACK to the idle host (zombie). 
+The idle host responds to this unexpected packet with an RST packet, thus incrementing its IP ID.
+
+In the third scenario, the target machine does not respond at all due to firewall rules. 
+This lack of response will lead to the same result as with the closed port; the idle host won’t increase the IP ID.
+
+For the final step, the attacker sends another SYN/ACK to the idle host. 
+The idle host responds with an RST packet, incrementing the IP ID by one again. 
+The attacker needs to compare the IP ID of the RST packet received in the first step with the IP ID of the RST packet received in this third step. If the difference is 1, it means the port on the target machine was closed or filtered. However, if the difference is 2, it means that the port on the target was open.
+
+It is worth repeating that this scan is called an idle scan because choosing an idle host is indispensable for the accuracy of the scan. If the “idle host” is busy, all the returned IP IDs would be useless.
+
+This room covered the following types of scans.
+
+| Port Scan | Type | Example Command |
+|-----------|------|-----------------|
+| TCP Null  | Scan	sudo nmap -sN 10.10.214.203 |
+| TCP FIN   | Scan	sudo nmap -sF 10.10.214.203 |
+| TCP Xmas  | Scan	sudo nmap -sX 10.10.214.203 |
+| TCP Maimon| Scan	sudo nmap -sM 10.10.214.203 |
+| TCP ACK   | Scan	sudo nmap -sA 10.10.214.203 |
+| TCP Window| Scan	sudo nmap -sW 10.10.214.203 |
+| Custom TCP| Scan	sudo nmap --scanflags URGACKPSHRSTSYNFIN 10.10.214.203 |
+| Spoofed Source IP | sudo nmap -S SPOOFED_IP 10.10.214.203 |
+| Spoofed MAC Address	--spoof-mac SPOOFED_MAC|
+| Decoy Scan	nmap -D DECOY_IP,ME 10.10.214.203 |
+| Idle (Zombie) Scan	sudo nmap -sI ZOMBIE_IP 10.10.214.203 |
+| Fragment IP data into 8 bytes	-f |
+| Fragment IP data into 16 bytes	-ff |
+| Option	Purpose|
+| --source-port PORT_NUM |
+| specify source | port number |
+| --data-length NUM | 
+|-------------------|
+
+append random data to reach given length
+These scan types rely on setting TCP flags in unexpected ways to prompt ports for a reply. 
+Null, FIN, and Xmas scan provoke a response from closed ports, while Maimon, ACK, and Window scans provoke a response from open and closed ports.
+
+| Option | Purpose |
+|--------|---------|
+|--reason| explains how Nmap made its conclusion |
+|-v	     | verbose |
+|-vv	   | very verbose|
+|-d	     | debugging |
+|-dd	   | more details for debugging |
+
