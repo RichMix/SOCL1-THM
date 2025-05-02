@@ -91,7 +91,6 @@ Attackers may deploy anti-forensics techniques to tamper with memory capture too
 
 Common examples include:
 |-------------------------------------------------------------------------------------------------------------------------------------|
-|-------------------------------------------------------------------------------------------------------------------------------------|
 | Unlinked or hidden modules -	Malware may unlink itself from process lists, making it invisible to tools relying on typical OS queries.|
 | DKOM (Direct Kernel Object Manipulation) -	Alters kernel structures to hide processes, threads, or drivers from standard system tools.|
 | Code injection -	Malicious code is injected into legitimate processes (e.g., explorer.exe, svchost.exe) to blend in and evade detection.|
