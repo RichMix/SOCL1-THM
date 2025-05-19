@@ -69,3 +69,17 @@ The tool also provides feeds associated with country, AS number and Top Level Do
 ## ThreatFox [ThreatFox](https://threatfox.abuse.ch/)
 With ThreatFox,  security analysts can search for, share and export indicators of compromise associated with malware. 
 IOCs can be exported in various formats such as MISP events, Suricata IDS Ruleset, Domain Host files, DNS Response Policy Zone, JSON files and CSV files.
+
+## PhishTool [Phishtool](https://www.phishtool.com/)
+
+The core features include:
+
+Perform email analysis: PhishTool retrieves metadata from phishing emails and provides analysts with the relevant explanations and capabilities to follow the email’s actions, attachments, and URLs to triage the situation.
+Heuristic intelligence: OSINT is baked into the tool to provide analysts with the intelligence needed to stay ahead of persistent attacks and understand what TTPs were used to evade security controls and allow the adversary to social engineer a target.
+
+Classification and reporting: Phishing email classifications are conducted to allow analysts to take action quickly. Additionally, reports can be generated to provide a forensic record that can be shared.
+Additional features are available on the Enterprise version:
+
+Manage user-reported phishing events.
+Report phishing email findings back to users and keep them engaged in the process.
+Email stack integration with Microsoft 365 and Google Workspace.
