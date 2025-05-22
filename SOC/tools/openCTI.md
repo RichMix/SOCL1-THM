@@ -1,5 +1,6 @@
 # OpenCTI
 OpenCTI is another open-sourced platform designed to provide organisations with the means to manage CTI through the storage, analysis, visualisation and presentation of threat campaigns, malware and IOCs.
+[OpenCTI](https://docs.opencti.io/latest/deployment/overview/)
 
 ### Objective
 Developed by the collaboration of the French National cybersecurity agency (ANSSI), the platform's main objective is to create a comprehensive tool that allows users to capitalise on technical and non-technical information while developing relationships between each piece of information and its primary source. 
