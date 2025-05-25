@@ -521,4 +521,522 @@ The output will be the same as the above, but only packets with the chosen proto
 Please use the following resources to understand how the BPF works and its use.
 
 
+# Snort in IDS/IPS Mode
+
+Capabilities of Snort are not limited to sniffing and logging the traffic. IDS/IPS mode helps you manage the traffic according to user-defined rules.
+
+Note that (N)IDS/IPS mode depends on the rules and configuration. TASK-10 summarises the essential paths, files and variables. Also, TASK-3 covers configuration testing. Here, we need to understand the operating logic first, and then we will be going into rules in TASK-9.
+
+
+Let's run Snort in IDS/IPS Mode
+
+NIDS mode parameters are explained in the table below;
+
+Parameter	Description
+-c	
+Defining the configuration file.
+
+-T	Testing the configuration file.
+-N	Disable logging.
+-D	Background mode.
+-A	
+Alert modes;
+
+full: Full alert mode, providing all possible information about the alert. This one also is the default mode; once you use -A and don't specify any mode, snort uses this mode.
+fast:  Fast mode shows the alert message, timestamp, source and destination IP, along with port numbers.
+
+console: Provides fast style alerts on the console screen.
+
+cmg: CMG style, basic header details with payload in hex and text format.
+
+none: Disabling alerting.
+
+
+Let's start using each parameter and see the difference between them. Snort needs active traffic on your interface, so we need to generate traffic to see Snort in action. To do this, use the traffic-generator script and sniff the traffic. 
+
+Once you start running IDS/IPS mode, you need to use rules. As we mentioned earlier, we will use a pre-defined ICMP rule as an example. The defined rule will only generate alerts in any direction of ICMP packet activity.
+
+alert icmp any any <> any any  (msg: "ICMP Packet Found"; sid: 100001; rev:1;)
+
+
+This rule is located in "/etc/snort/rules/local.rules".
+
+Remember, in this module, we will focus only on the operating modes. The rules are covered in TASK9&10. Snort will create an "alert" file if the traffic flow triggers an alert. One last note; once you start running IPS/IDS mode, the sniffing and logging mode will be semi-passive. However, you can activate the functions using the parameters discussed in previous tasks. (-i, -v, -d, -e, -X, -l, -K ASCII) If you don't remember the purpose of these commands, please revisit TASK4.
+
+
+IDS/IPS mode with parameter "-c and -T"
+
+Start the Snort instance and test the configuration file. sudo snort -c /etc/snort/snort.conf -T  This command will check your configuration file and prompt it if there is any misconfiguratioın in your current setting. You should be familiar with this command if you covered TASK3. If you don't remember the output of this command, please revisit TASK4.
+
+
+IDS/IPS mode with parameter "-N"
+
+Start the Snort instance and disable logging by running the following command: sudo snort -c /etc/snort/snort.conf -N
+
+Now run the traffic-generator script as sudo and start ICMP/HTTP traffic. This command will disable logging mode. The rest of the other functions will still be available (if activated).
+
+The command-line output will provide the information requested with the parameters. So, if you activate verbosity (-v) or full packet dump (-X) you will still have the output in the console, but there will be no logs in the log folder.
+
+
+IDS/IPS mode with parameter "-D"
+
+Start the Snort instance in background mode with the following command: sudo snort -c /etc/snort/snort.conf -D
+
+Now run the traffic-generator script as sudo and start ICMP/HTTP traffic. Once the traffic is generated, snort will start processing the packets and accomplish the given task with additional parameters.
+
+running in background mode
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -D
+
+Spawning daemon child...
+My daemon child 2898 lives...
+Daemon parent exiting (0)
+The command-line output will provide the information requested with the parameters. So, if you activate verbosity (-v) or full packet dump (-X) with packet logger mode (-l) you will still have the logs in the logs folder, but there will be no output in the console.
+Once you start the background mode and want to check the corresponding process, you can easily use the "ps" command as shown below;
+
+running in background mode
+user@ubuntu$ ps -ef | grep snort
+
+root        2898    1706  0 05:53 ?        00:00:00 snort -c /etc/snort/snort.conf -D
+If you want to stop the daemon, you can easily use the "kill" command to stop the process.
+
+running in background mode
+user@ubuntu$ sudo kill -9 2898
+Note that daemon mode is mainly used to automate the Snort. This parameter is mainly used in scripts to start the Snort service in the background. It is not recommended to use this mode unless you have a working knowledge of Snort and stable configuration.
+
+IDS/IPS mode with parameter "-A"
+
+Remember that there are several alert modes available in snort;
+
+console: Provides fast style alerts on the console screen.
+cmg: Provides basic header details with payload in hex and text format.
+full: Full alert mode, providing all possible information about the alert.
+fast: Fast mode, shows the alert message, timestamp, source and destination ıp along with port numbers.
+none: Disabling alerting.
+In this section, only the "console" and "cmg" parameters provide alert information in the console. It is impossible to identify the difference between the rest of the alert modes via terminal. Differences can be identified by looking at generated logs. 
+
+At the end of this section, we will compare the "full", "fast" and "none" modes. Remember that these parameters don't provide console output, so we will continue to identify the differences through log formats.
+
+
+IDS/IPS mode with parameter "-A console"
+
+Console mode provides fast style alerts on the console screen. Start the Snort instance in console alert mode (-A console ) with the following command sudo snort -c /etc/snort/snort.conf -A console
+
+Now run the traffic-generator script as sudo and start ICMP/HTTP traffic. Once the traffic is generated, snort will start generating alerts according to provided ruleset defined in the configuration file. 
+
+running in console alert mode
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -A console
+Running in IDS mode
+
+        --== Initializing Snort ==--
+Initializing Output Plugins!
+Initializing Preprocessors!
+Initializing Plug-ins!
+Parsing Rules file "/etc/snort/snort.conf"
+...
+Commencing packet processing (pid=3743)
+12/12-02:08:27.577495  [**] [1:366:7] ICMP PING *NIX [**] [Classification: Misc activity] [Priority: 3] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-02:08:27.577495  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-02:08:27.577495  [**] [1:384:5] ICMP PING [**] [Classification: Misc activity] [Priority: 3] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-02:08:27.609719  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+^C*** Caught Int-Signal
+12/12-02:08:29.595898  [**] [1:366:7] ICMP PING *NIX [**] [Classification: Misc activity] [Priority: 3] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-02:08:29.595898  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-02:08:29.595898  [**] [1:384:5] ICMP PING [**] [Classification: Misc activity] [Priority: 3] {ICMP} 192.168.175.129 -> 142.250.187.110
+===============================================================================
+Run time for packet processing was 26.25844 seconds
+Snort processed 88 packets.
+
+IDS/IPS mode with parameter "-A cmg"
+
+Cmg mode provides basic header details with payload in hex and text format. Start the Snort instance in cmg alert mode (-A cmg ) with the following command sudo snort -c /etc/snort/snort.conf -A cmg
+
+Now run the traffic-generator script as sudo and start ICMP/HTTP traffic. Once the traffic is generated, snort will start generating alerts according to provided ruleset defined in the configuration file. 
+
+running in cmg alert mode
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -A cmg
+Running in IDS mode
+
+        --== Initializing Snort ==--
+Initializing Output Plugins!
+Initializing Preprocessors!
+Initializing Plug-ins!
+Parsing Rules file "/etc/snort/snort.conf"
+...
+Commencing packet processing (pid=3743)
+12/12-02:23:56.944351  [**] [1:366:7] ICMP PING *NIX [**] [Classification: Misc activity] [Priority: 3] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-02:23:56.944351 00:0C:29:A5:B7:A2 -> 00:50:56:E1:9B:9D type:0x800 len:0x62
+192.168.175.129 -> 142.250.187.110 ICMP TTL:64 TOS:0x0 ID:10393 IpLen:20 DgmLen:84 DF
+Type:8  Code:0  ID:4   Seq:1  ECHO
+BC CD B5 61 00 00 00 00 CE 68 0E 00 00 00 00 00  ...a.....h......
+10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F  ................
+20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F   !"#$%&'()*+,-./
+30 31 32 33 34 35 36 37                          01234567
+
+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+Let's compare the console and cmg outputs before moving on to other alarm types. As you can see in the given outputs above, console mode provides basic header and rule information. Cmg mode provides full packet details along with rule information. 
+
+
+IDS/IPS mode with parameter "-A fast"
+
+Fast mode provides alert messages, timestamps, and source and destination IP addresses. Remember, there is no console output in this mode. Start the Snort instance in fast alert mode (-A fast ) with the following command sudo snort -c /etc/snort/snort.conf -A fast
+
+Now run the traffic-generator script as sudo and start ICMP/HTTP traffic. Once the traffic is generated, snort will start generating alerts according to provided ruleset defined in the configuration file. 
+
+running in fast alert mode
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -A fast
+Running in IDS mode
+
+        --== Initializing Snort ==--
+Initializing Output Plugins!
+Initializing Preprocessors!
+Initializing Plug-ins!
+Parsing Rules file "/etc/snort/snort.conf"
+...
+Commencing packet processing (pid=3743)
+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+Let's check the alarm file;
+
+
+
+As you can see in the given picture above, fast style alerts contain summary information on the action like direction and alert header.
+
+
+IDS/IPS mode with parameter "-A full"
+
+Full alert mode provides all possible information about the alert. Remember, there is no console output in this mode. Start the Snort instance in full alert mode (-A full ) with the following command sudo snort -c /etc/snort/snort.conf -A full
+
+Now run the traffic-generator script as sudo and start ICMP/HTTP traffic. Once the traffic is generated, snort will start generating alerts according to provided ruleset defined in the configuration file. 
+
+running in full alert mode
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -A full
+Running in IDS mode
+
+        --== Initializing Snort ==--
+Initializing Output Plugins!
+Initializing Preprocessors!
+Initializing Plug-ins!
+Parsing Rules file "/etc/snort/snort.conf"
+...
+Commencing packet processing (pid=3744)
+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+Let's check the alarm file;
+
+
+
+ As you can see in the given picture above, full style alerts contain all possible information on the action.
+
+
+IDS/IPS mode with parameter "-A none"
+
+Disable alerting. This mode doesn't create the alert file. However, it still logs the traffic and creates a log file in binary dump format. Remember, there is no console output in this mode. Start the Snort instance in none alert mode (-A none) with the following command sudo snort -c /etc/snort/snort.conf -A none
+
+Now run the traffic-generator script as sudo and start ICMP/HTTP traffic. Once the traffic is generated, snort will start generating alerts according to provided ruleset defined in the configuration file. 
+
+running in none alert mode
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -A none
+Running in IDS mode
+
+        --== Initializing Snort ==--
+Initializing Output Plugins!
+Initializing Preprocessors!
+Initializing Plug-ins!
+Parsing Rules file "/etc/snort/snort.conf"
+...
+Commencing packet processing (pid=3745)
+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+As you can see in the picture below, there is no alert file. Snort only generated the log file.
+
+
+
+
+IDS/IPS mode: "Using rule file without configuration file"
+
+It is possible to run the Snort only with rules without a configuration file. Running the Snort in this mode will help you test the user-created rules. However, this mode will provide less performance.
+
+running without configuration file
+user@ubuntu$ sudo snort -c /etc/snort/rules/local.rules -A console
+Running in IDS mode
+
+12/12-12:13:29.167955  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:29.200543  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:30.169785  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:30.201470  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:31.172101  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+^C*** Caught Int-Signal
+
+IPS mode and dropping packets
+
+Snort IPS mode activated with -Q --daq afpacket parameters. You can also activate this mode by editing snort.conf file. However, you don't need to edit snort.conf file in the scope of this room. Review the bonus task or snort manual for further information on daq and advanced configuration settings: -Q --daq afpacket
+
+Activate the Data Acquisition (DAQ) modules and use the afpacket module to use snort as an IPS: -i eth0:eth1
+
+Identifying interfaces note that Snort IPS require at least two interfaces to work. Now run the traffic-generator script as sudo and start ICMP/HTTP traffic.
+
+running
+IPS
+mode
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -q -Q --daq afpacket -i eth0:eth1 -A console
+Running in IPS mode
+
+12/18-07:40:01.527100  [Drop] [**] [1:1000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.131 -> 192.168.175.2
+12/18-07:40:01.552811  [Drop] [**] [1:1000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 172.217.169.142 -> 192.168.1.18
+12/18-07:40:01.566232  [Drop] [**] [1:1000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.131 -> 192.168.175.2
+12/18-07:40:02.517903  [Drop] [**] [1:1000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.1.18 -> 172.217.169.142
+12/18-07:40:02.550844  [Drop] [**] [1:1000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 172.217.169.142 -> 192.168.1.18
+^C*** Caught Int-Signal
+As you can see in the picture above, Snort blocked the packets this time. We used the same rule with a different action (drop/reject). Remember, for the scope of this task; our point is the operating mode, not the rule.
+Let's investigate PCAPs with Snort
+
+Capabilities of Snort are not limited to sniffing, logging and detecting/preventing the threats. PCAP read/investigate mode helps you work with pcap files. Once you have a pcap file and process it with Snort, you will receive default traffic statistics with alerts depending on your ruleset.
+
+Reading a pcap without using any additional parameters we discussed before will only overview the packets and provide statistics about the file. In most cases, this is not very handy. We are investigating the pcap with Snort to benefit from the rules and speed up our investigation process by using the known patterns of threats. 
+
+Note that we are pretty close to starting to create rules. Therefore, you need to grasp the working mechanism of the Snort, learn the discussed parameters and begin combining the parameters for different purposes.
+
+PCAP mode parameters are explained in the table below;
+
+Parameter	Description
+-r / --pcap-single=	Read a single pcap
+--pcap-list=""	Read pcaps provided in command (space separated).
+--pcap-show	Show pcap name on console during processing.
+
+Investigating single PCAP with parameter "-r"
+
+For test purposes, you can still test the default reading option with pcap by using the following command snort -r icmp-test.pcap
+
+Let's investigate the pcap with our configuration file and see what will happen. sudo snort -c /etc/snort/snort.conf -q -r icmp-test.pcap -A console -n 10
+
+If you don't remember the purpose of the parameters in the given command, please revisit previous tasks and come back again!
+
+investigating single
+pcap
+file
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -q -r icmp-test.pcap -A console -n 10
+
+12/12-12:13:29.167955  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:29.200543  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:30.169785  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:30.201470  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:31.172101  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:31.204104  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:32.174106  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:32.208683  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:33.176920  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:33.208359  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+Our ICMP rule got a hit! As you can see in the given output, snort identified the traffic and prompted the alerts according to our ruleset.
+
+
+Investigating multiple PCAPs with parameter "--pcap-list"
+
+Let's investigate multiple pcaps with our configuration file and see what will happen. sudo snort -c /etc/snort/snort.conf -q --pcap-list="icmp-test.pcap http2.pcap" -A console -n 10
+
+investigating multiple
+pcap
+files
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -q --pcap-list="icmp-test.pcap http2.pcap" -A console
+
+12/12-12:13:29.167955  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:29.200543  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:30.169785  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:30.201470  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:31.172101  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+...
+12/12-12:13:31.204104  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:32.174106  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:32.208683  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:33.176920  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:33.208359  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+Our ICMP rule got a hit! As you can see in the given output, snort identified the traffic and prompted the alerts according to our ruleset.
+
+Here is one point to notice: we've processed two pcaps, and there are lots of alerts, so it is impossible to match the alerts with provided pcaps without snort's help. We need to separate the pcap process to identify the source of the alerts.
+
+
+Investigating multiple PCAPs with parameter "--pcap-show"
+
+Let's investigate multiple pcaps, distinguish each one, and see what will happen. sudo snort -c /etc/snort/snort.conf -q --pcap-list="icmp-test.pcap http2.pcap" -A console --pcap-show
+
+investigating multiple
+pcap
+files wth
+pcap
+info
+user@ubuntu$ sudo snort -c /etc/snort/snort.conf -q --pcap-list="icmp-test.pcap http2.pcap" -A console --pcap-show 
+
+Reading network traffic from "icmp-test.pcap" with snaplen = 1514
+12/12-12:13:29.167955  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:29.200543  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:30.169785  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+...
+
+Reading network traffic from "http2.pcap" with snaplen = 1514
+12/12-12:13:35.213176  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+12/12-12:13:36.182950  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 192.168.175.129 -> 142.250.187.110
+12/12-12:13:38.223470  [**] [1:10000001:0] ICMP Packet found [**] [Priority: 0] {ICMP} 142.250.187.110 -> 192.168.175.129
+...
+Our ICMP rule got a hit! As you can see in the given output, snort identified the traffic, distinguished each pcap file and prompted the alerts according to our ruleset.
+
+Now, use the attached VM and navigate to the Task-Exercises/Exercise-Files/TASK-8 folder to answer the questions!
+
+
+# Let's Learn Snort Rules!
+
+Understanding the Snort rule format is essential for any blue and purple teamer.  The primary structure of the snort rule is shown below;
+
+Each rule should have a type of action, protocol, source and destination IP, source and destination port and an option. Remember, Snort is in passive mode by default. So most of the time, you will use Snort as an IDS. You will need to start "inline mode" to turn on IPS mode. But before you start playing with inline mode, you should be familiar with Snort features and rules.
+
+The Snort rule structure is easy to understand but difficult to produce. You should be familiar with rule options and related details to create efficient rules. It is recommended to practice Snort rules and option details for different use cases.
+
+We will cover the basic rule structure in this room and help you take a step into snort rules. You can always advance your rule creation skills with different rule options by practising different use cases and studying rule option details in depth. We will focus on two actions; "alert" for IDS mode and "reject" for IPS mode.
+
+Rules cannot be processed without a header. Rule options are "optional" parts. However, it is almost impossible to detect sophisticated attacks without using the rule options.
+
+Action	
+There are several actions for rules. Make sure you understand the functionality and test it before creating rules for live systems. The most common actions are listed below.
+
+alert: Generate an alert and log the packet.
+log: Log the packet.
+drop: Block and log the packet.
+reject: Block the packet, log it and terminate the packet session. 
+Protocol	
+Protocol parameter identifies the type of the protocol that filtered for the rule.
+
+Note that Snort2 supports only four protocols filters in the rules (IP, TCP, UDP and ICMP). However, you can detect the application flows using port numbers and options. For instance, if you want to detect FTP traffic, you cannot use the FTP keyword in the protocol field but filter the FTP traffic by investigating TCP traffic on port 21.
+
+ 
+
+IP and Port Numbers
+
+These parameters identify the source and destination IP addresses and associated port numbers filtered for the rule.
+
+IP Filtering	
+alert icmp 192.168.1.56 any <> any any  (msg: "ICMP Packet From "; sid: 100001; rev:1;)
+This rule will create an alert for each ICMP packet originating from the 192.168.1.56 IP address.
+Filter an IP range	
+alert icmp 192.168.1.0/24 any <> any any  (msg: "ICMP Packet Found"; sid: 100001; rev:1;)
+This rule will create an alert for each ICMP packet originating from the 192.168.1.0/24 subnet.
+Filter multiple IP ranges	
+alert icmp [192.168.1.0/24, 10.1.1.0/24] any <> any any  (msg: "ICMP Packet Found"; sid: 100001; rev:1;)
+This rule will create an alert for each ICMP packet originating from the 192.168.1.0/24 and 10.1.1.0/24 subnets.
+Exclude IP addresses/ranges	
+"negation operator" is used for excluding specific addresses and ports. Negation operator is indicated with "!"
+alert icmp !192.168.1.0/24 any <> any any  (msg: "ICMP Packet Found"; sid: 100001; rev:1;)
+This rule will create an alert for each ICMP packet not originating from the 192.168.1.0/24 subnet.
+Port Filtering	
+alert tcp any any <> any 21  (msg: "FTP Port 21 Command Activity Detected"; sid: 100001; rev:1;)
+This rule will create an alert for each TCP packet sent to port 21.
+Exclude a specific port	
+alert tcp any any <> any !21  (msg: "Traffic Activity Without FTP Port 21 Command Channel"; sid: 100001; rev:1;)
+This rule will create an alert for each TCP packet not sent to port 21.
+Filter a port range (Type 1)	
+alert tcp any any <> any 1:1024   (msg: "TCP 1-1024 System Port Activity"; sid: 100001; rev:1;)
+This rule will create an alert for each TCP packet sent to ports between 1-1024.
+Filter a port range (Type 2)	
+alert tcp any any <> any :1024   (msg: "TCP 0-1024 System Port Activity"; sid: 100001; rev:1;)
+This rule will create an alert for each TCP packet sent to ports less than or equal to 1024.
+Filter a port range (Type 3)	
+alert tcp any any <> any 1025: (msg: "TCP Non-System Port Activity"; sid: 100001; rev:1;)
+This rule will create an alert for each TCP packet sent to source port higher than or equal to 1025.
+Filter a port range (Type 4)	
+alert tcp any any <> any [21,23] (msg: "FTP and Telnet Port 21-23 Activity Detected"; sid: 100001; rev:1;)
+This rule will create an alert for each TCP packet sent to port 21 and 23.
+ 
+
+Direction
+
+The direction operator indicates the traffic flow to be filtered by Snort. The left side of the rule shows the source, and the right side shows the destination.
+
+-> Source to destination flow.
+<> Bidirectional flow
+Note that there is no "<-" operator in Snort.
+
+
+
+There are three main rule options in Snort;
+
+General Rule Options - Fundamental rule options for Snort. 
+Payload Rule Options - Rule options that help to investigate the payload data. These options are helpful to detect specific payload patterns.
+Non-Payload Rule Options - Rule options that focus on non-payload data. These options will help create specific patterns and identify network issues.
+General Rule Options
+
+Msg	The message field is a basic prompt and quick identifier of the rule. Once the rule is triggered, the message filed will appear in the console or log. Usually, the message part is a one-liner that summarises the event.
+Sid	
+Snort rule IDs (SID) come with a pre-defined scope, and each rule must have a SID in a proper format. There are three different scopes for SIDs shown below.
+
+<100: Reserved rules
+100-999,999: Rules came with the build.
+>=1,000,000: Rules created by user.
+Briefly, the rules we will create should have sid greater than 100.000.000. Another important point is; SIDs should not overlap, and each id must be unique. 
+
+Reference	Each rule can have additional information or reference to explain the purpose of the rule or threat pattern. That could be a Common Vulnerabilities and Exposures (CVE) id or external information. Having references for the rules will always help analysts during the alert and incident investigation.
+Rev	
+Snort rules can be modified and updated for performance and efficiency issues. Rev option help analysts to have the revision information of each rule. Therefore, it will be easy to understand rule improvements. Each rule has its unique rev number, and there is no auto-backup feature on the rule history. Analysts should keep the rule history themselves. Rev option is only an indicator of how many times the rule had revisions.
+
+alert icmp any any <> any any (msg: "ICMP Packet Found"; sid: 100001; reference:cve,CVE-XXXX; rev:1;)
+
+Payload Detection Rule Options
+
+Content	
+Payload data. It matches specific payload data by ASCII, HEX or both. It is possible to use this option multiple times in a single rule. However, the more you create specific pattern match features, the more it takes time to investigate a packet.
+
+Following rules will create an alert for each HTTP packet containing the keyword "GET". This rule option is case sensitive!
+
+ASCII mode - alert tcp any any <> any 80  (msg: "GET Request Found"; content:"GET"; sid: 100001; rev:1;)
+HEX mode - alert tcp any any <> any 80  (msg: "GET Request Found"; content:"|47 45 54|"; sid: 100001; rev:1;)
+Nocase	
+Disabling case sensitivity. Used for enhancing the content searches.
+alert tcp any any <> any 80  (msg: "GET Request Found"; content:"GET"; nocase; sid: 100001; rev:1;)
+Fast_pattern	
+Prioritise content search to speed up the payload search operation. By default, Snort uses the biggest content and evaluates it against the rules. "fast_pattern" option helps you select the initial packet match with the specific value for further investigation. This option always works case insensitive and can be used once per rule. Note that this option is required when using multiple "content" options. 
+
+The following rule has two content options, and the fast_pattern option tells to snort to use the first content option (in this case, "GET") for the initial packet match.
+
+alert tcp any any <> any 80  (msg: "GET Request Found"; content:"GET"; fast_pattern; content:"www";  sid:100001; rev:1;)
+
+Non-Payload Detection Rule Options
+
+There are rule options that focus on non-payload data. These options will help create specific patterns and identify network issues.
+
+ID	
+Filtering the IP id field.
+alert tcp any any <> any any (msg: "ID TEST"; id:123456; sid: 100001; rev:1;)
+Flags	
+Filtering the TCP flags.
+
+F - FIN
+S - SYN
+R - RST
+P - PSH
+A - ACK
+U - URG
+ 
+
+alert tcp any any <> any any (msg: "FLAG TEST"; flags:S;  sid: 100001; rev:1;)
+
+Dsize	
+Filtering the packet payload size.
+
+dsize:min<>max;
+dsize:>100
+dsize:<100
+alert ip any any <> any any (msg: "SEQ TEST"; dsize:100<>300;  sid: 100001; rev:1;)
+
+Sameip	
+Filtering the source and destination IP addresses for duplication.
+alert ip any any <> any any (msg: "SAME-IP TEST";  sameip; sid: 100001; rev:1;)
+Remember, once you create a rule, it is a local rule and should be in your "local.rules" file. This file is located under "/etc/snort/rules/local.rules". A quick reminder on how to edit your local rules is shown below.
+
+
+modifying the local rules
+user@ubuntu$ sudo gedit /etc/snort/rules/local.rules 
+That is your "local.rules" file.
+
+
+
+Note that there are some default rules activated with snort instance. These rules are deactivated to manage your rules and improve your exercise experience. For further information, please refer to the TASK-10 or Snort manual.
+
+By this point, we covered the primary structure of the Snort rules. Understanding and practicing the fundamentals is suggested before creating advanced rules and using additional options.
+
+
+
+
 
